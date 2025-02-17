@@ -70,10 +70,8 @@ def scrape_amazon_product_info(url):
     'Upgrade-Insecure-Requests': '1',
     'Referer': 'https://www.amazon.in/',
 }
-response = requests.get(url, headers=headers, timeout=10)
-
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers,timeout=10)
         response.raise_for_status()  # Raise an error for bad status codes
         soup = BeautifulSoup(response.content, "html.parser")
 
