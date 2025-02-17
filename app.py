@@ -61,10 +61,17 @@ def text_preprocess(text):
 
 # Function to scrape product info from Amazon
 def scrape_amazon_product_info(url):
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.5'
-    }
+  headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                  '(KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+    'Referer': 'https://www.amazon.in/',
+}
+response = requests.get(url, headers=headers, timeout=10)
+
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()  # Raise an error for bad status codes
