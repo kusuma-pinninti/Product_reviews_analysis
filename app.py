@@ -69,7 +69,7 @@ def scrape_amazon_product_info(url):
     'Connection': 'keep-alive',
     'Upgrade-Insecure-Requests': '1',
     'Referer': 'https://www.amazon.in/',
-}
+    }
     try:
         response = requests.get(url, headers=headers,timeout=10)
         response.raise_for_status()  # Raise an error for bad status codes
