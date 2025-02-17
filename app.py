@@ -52,8 +52,11 @@ def text_preprocess(text):
     text = text.lower()
     text = re.sub(r'\W', ' ', text)
     text = re.sub(r'\s+', ' ', text).strip()
-    words = word_tokenize(text)
-    words = [word for word in words if word not in stopwords.words("english")]
+    
+    # Tokenize using spaCy
+    doc = nlp(text)
+    words = [token.text for token in doc if not token.is_stop]
+    
     return " ".join(words)
 
 # Function to scrape product info from Amazon
