@@ -10,13 +10,18 @@ from bs4 import BeautifulSoup
 from collections import Counter
 import spacy
 import google.generativeai as genai  # For Gemini API
+import os
 
 # Download NLTK resources
 nltk.download("stopwords")
 nltk.download("punkt")
 
 # Load spaCy model (small English model)
-nlp = spacy.load("en_core_web_sm")
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    st.error("spaCy model 'en_core_web_sm' not found. Please install it using `python -m spacy download en_core_web_sm`.")
+    st.stop()
 
 # Google Drive file IDs (replace with your actual file IDs)
 MODEL_FILE_ID = "1XEaBunWsBdU9-Vjp9pE8nffR4HxDrpY3"
@@ -33,12 +38,26 @@ def download_file(file_id, output_path):
     gdown.download(url, output_path, quiet=False)
 
 # Download files
+st.write("Downloading model file...")
 download_file(MODEL_FILE_ID, model_path)
+st.write("Downloading vectorizer file...")
 download_file(VECTORIZER_FILE_ID, vectorizer_path)
 
+# Check if files were downloaded successfully
+if not os.path.exists(model_path):
+    st.error(f"Model file not found at {model_path}. Please check the Google Drive link.")
+    st.stop()
+if not os.path.exists(vectorizer_path):
+    st.error(f"Vectorizer file not found at {vectorizer_path}. Please check the Google Drive link.")
+    st.stop()
+
 # Load Model and Vectorizer
-model = joblib.load(model_path)
-vectorizer = joblib.load(vectorizer_path)
+try:
+    model = joblib.load(model_path)
+    vectorizer = joblib.load(vectorizer_path)
+except Exception as e:
+    st.error(f"Error loading model or vectorizer: {e}")
+    st.stop()
 
 # Set up Gemini API
 GEMINI_API_KEY = "AIzaSyDKl3pN0X1sIA6RCAu1kjb1c8xuKt9Hylc"  # Replace with your Gemini API key
@@ -62,18 +81,26 @@ def text_preprocess(text):
 # Function to scrape product info from Amazon
 def scrape_amazon_product_info(url):
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-                      '(KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
         'Accept-Language': 'en-US,en;q=0.9',
         'Accept-Encoding': 'gzip, deflate, br',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
-        'Referer': 'https://www.amazon.in/',
+        'Referer': 'https://www.amazon.com/',
     }
     try:
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()  # Raise an error for bad status codes
+
+        # Debug: Print the status code and response content
+        st.write(f"Status Code: {response.status_code}")
+        st.write(f"Response Content (First 1000 characters): {response.text[:1000]}")  # Print first 1000 characters of the response
+
         soup = BeautifulSoup(response.content, "html.parser")
+
+        # Debug: Print the HTML structure
+        st.write("HTML Structure (First 1000 characters):")
+        st.write(soup.prettify()[:1000])  # Print first 1000 characters of the HTML
 
         # Extract product name
         product_name = soup.find('span', {'id': 'productTitle'})
@@ -89,6 +116,7 @@ def scrape_amazon_product_info(url):
     except Exception as e:
         st.error(f"Error scraping Amazon product info: {e}")
         return None, None, None
+
 # Function to analyze reviews using the model
 def analyze_reviews(reviews):
     fake_count, genuine_count = 0, 0
@@ -99,8 +127,6 @@ def analyze_reviews(reviews):
         if processed:
             tfidf_review = vectorizer.transform([processed])
             prediction = model.predict(tfidf_review)[0]
-           # st.write(f"Review: {review}")  # Debugging: Print the review
-            #st.write(f"Prediction: {prediction}")  # Debugging: Print the prediction
 
             if prediction == "OR":
                 genuine_count += 1
