@@ -61,17 +61,17 @@ def text_preprocess(text):
 
 # Function to scrape product info from Amazon
 def scrape_amazon_product_info(url):
-     headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-                  '(KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Connection': 'keep-alive',
-    'Upgrade-Insecure-Requests': '1',
-    'Referer': 'https://www.amazon.in/',
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                      '(KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Referer': 'https://www.amazon.in/',
     }
     try:
-        response = requests.get(url, headers=headers,timeout=10)
+        response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()  # Raise an error for bad status codes
         soup = BeautifulSoup(response.content, "html.parser")
 
@@ -89,7 +89,6 @@ def scrape_amazon_product_info(url):
     except Exception as e:
         st.error(f"Error scraping Amazon product info: {e}")
         return None, None, None
-
 # Function to analyze reviews using the model
 def analyze_reviews(reviews):
     fake_count, genuine_count = 0, 0
