@@ -8,3 +8,5 @@ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0
 google-generativeai==0.3.2
 gdown==4.7.3
 scikit-learn==1.4.0
+selenium
+
