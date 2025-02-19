@@ -81,16 +81,14 @@ def text_preprocess(text):
 # Function to scrape product info from Amazon
 def scrape_amazon_product_info(url):
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Referer': 'https://www.amazon.com/',
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
     try:
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()  # Raise an error for bad status codes
+        url = "https://www.amazon.in/dp/B09G9BL5CP"  # Replace with actual product URL
+        response = requests.get(url, headers=headers)
+
+        print(response.status_code)
+        print(response.text[:1000]) 
 
         soup = BeautifulSoup(response.content, "html.parser")
 
