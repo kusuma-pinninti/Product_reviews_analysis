@@ -5,25 +5,22 @@ import re
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-import requests
-from bs4 import BeautifulSoup
-from collections import Counter
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 import spacy
 import google.generativeai as genai  # For Gemini API
-import os
 
 # Download NLTK resources
 nltk.download("stopwords")
 nltk.download("punkt")
 
 # Load spaCy model (small English model)
-try:
-    nlp = spacy.load("en_core_web_sm")
-except OSError:
-    st.error("spaCy model 'en_core_web_sm' not found. Please install it using `python -m spacy download en_core_web_sm`.")
-    st.stop()
+nlp = spacy.load("en_core_web_sm")
 
-# Google Drive file IDs (replace with your actual file IDs)
+# Google Drive file IDs (replace with actual file IDs)
 MODEL_FILE_ID = "1XEaBunWsBdU9-Vjp9pE8nffR4HxDrpY3"
 VECTORIZER_FILE_ID = "1eqhrs7kp4X0DXskiI4rBMS5V3m0eZN8j"
 
@@ -38,32 +35,17 @@ def download_file(file_id, output_path):
     gdown.download(url, output_path, quiet=False)
 
 # Download files
-st.write("Downloading model file...")
 download_file(MODEL_FILE_ID, model_path)
-st.write("Downloading vectorizer file...")
 download_file(VECTORIZER_FILE_ID, vectorizer_path)
 
-# Check if files were downloaded successfully
-if not os.path.exists(model_path):
-    st.error(f"Model file not found at {model_path}. Please check the Google Drive link.")
-    st.stop()
-if not os.path.exists(vectorizer_path):
-    st.error(f"Vectorizer file not found at {vectorizer_path}. Please check the Google Drive link.")
-    st.stop()
-
 # Load Model and Vectorizer
-try:
-    model = joblib.load(model_path)
-    vectorizer = joblib.load(vectorizer_path)
-except Exception as e:
-    st.error(f"Error loading model or vectorizer: {e}")
-    st.stop()
+model = joblib.load(model_path)
+vectorizer = joblib.load(vectorizer_path)
 
 # Set up Gemini API
-GEMINI_API_KEY = "AIzaSyDKl3pN0X1sIA6RCAu1kjb1c8xuKt9Hylc"  # Replace with your Gemini API key
+GEMINI_API_KEY = "AIzaSyDKl3pN0X1sIA6RCAu1kjb1c8xuKt9Hylc"
 genai.configure(api_key=GEMINI_API_KEY)
 
-# Initialize Gemini model
 gemini_model = genai.GenerativeModel("gemini-pro")
 
 # Function to preprocess text
@@ -71,42 +53,34 @@ def text_preprocess(text):
     text = text.lower()
     text = re.sub(r'\W', ' ', text)
     text = re.sub(r'\s+', ' ', text).strip()
-    
-    # Tokenize using spaCy
-    doc = nlp(text)
-    words = [token.text for token in doc if not token.is_stop]
-    
+    words = word_tokenize(text)
+    words = [word for word in words if word not in stopwords.words("english")]
     return " ".join(words)
 
-# Function to scrape product info from Amazon
+# Function to scrape product info using Selenium
 def scrape_amazon_product_info(url):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=options)
+    
     try:
-        url = "https://www.amazon.in/dp/B09G9BL5CP"  # Replace with actual product URL
-        response = requests.get(url, headers=headers)
-
-        print(response.status_code)
-        print(response.text[:1000]) 
-
-        soup = BeautifulSoup(response.content, "html.parser")
-
-        # Extract product name
-        product_name = soup.find('span', {'id': 'productTitle'})
-        product_name = product_name.text.strip() if product_name else "Product Name Not Found"
-
-        # Extract product image URL
-        image_tag = soup.find('img', {'id': 'landingImage'}) or soup.find('img', {'class': 'a-dynamic-image'})
-        image_url = image_tag['src'] if image_tag else None
-
-        # Extract reviews
-        reviews = [review.text for review in soup.find_all('span', {'data-hook': 'review-body'})]
-        return product_name, image_url, reviews[:10]  # Limit to first 10 reviews
+        driver.get(url)
+        driver.implicitly_wait(5)
+        
+        product_name = driver.find_element(By.ID, "productTitle").text.strip()
+        image_url = driver.find_element(By.ID, "landingImage").get_attribute("src")
+        reviews = [el.text for el in driver.find_elements(By.XPATH, "//span[@data-hook='review-body']")][:10]
+        
+        return product_name, image_url, reviews
     except Exception as e:
         st.error(f"Error scraping Amazon product info: {e}")
         return None, None, None
-
+    finally:
+        driver.quit()
+   
 # Function to analyze reviews using the model
 def analyze_reviews(reviews):
     fake_count, genuine_count = 0, 0
