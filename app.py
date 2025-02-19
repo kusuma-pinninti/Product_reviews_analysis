@@ -92,15 +92,7 @@ def scrape_amazon_product_info(url):
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()  # Raise an error for bad status codes
 
-        # Debug: Print the status code and response content
-        st.write(f"Status Code: {response.status_code}")
-        st.write(f"Response Content (First 1000 characters): {response.text[:1000]}")  # Print first 1000 characters of the response
-
         soup = BeautifulSoup(response.content, "html.parser")
-
-        # Debug: Print the HTML structure
-        st.write("HTML Structure (First 1000 characters):")
-        st.write(soup.prettify()[:1000])  # Print first 1000 characters of the HTML
 
         # Extract product name
         product_name = soup.find('span', {'id': 'productTitle'})
@@ -247,7 +239,7 @@ with button_col2:
                 product_name, product_image, reviews = scrape_amazon_product_info(product_url)
                 if product_name:
                     if product_image:
-                        st.image(product_image, caption=product_name, use_column_width=False, width=300)  # Decrease image size
+                        st.image(product_image, caption=product_name, use_container_width=False, width=300)  # Decrease image size
                     else:
                         st.markdown(f"<h2 style='text-align: center;'>{product_name}</h2>", unsafe_allow_html=True)
 
