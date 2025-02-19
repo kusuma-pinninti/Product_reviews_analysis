@@ -41,17 +41,11 @@ model = joblib.load(model_path)
 vectorizer = joblib.load(vectorizer_path)
 
 # Set up Gemini API
-GEMINI_API_KEY = "AIzaSyDKl3pN0X1sIA6RCAu1kjb1c8xuKt9Hylc" 
+GEMINI_API_KEY = "AIzaSyDKl3pN0X1sIA6RCAu1kjb1c8xuKt9Hylc"  # Replace with your Gemini API key
 genai.configure(api_key=GEMINI_API_KEY)
 
 # Initialize Gemini model
 gemini_model = genai.GenerativeModel("gemini-pro")
-
-# Proxy settings (modify with your proxy server if needed)
-PROXY = {
-    "http": "189.240.60.169:9090",
-    "https": "13.36.113.81:3128"
-}
 
 # Function to preprocess text
 def text_preprocess(text):
@@ -69,7 +63,7 @@ def scrape_amazon_product_info(url):
         'Accept-Language': 'en-US,en;q=0.5'
     }
     try:
-        response = requests.get(url, headers=headers, proxies=PROXY)
+        response = requests.get(url, headers=headers)
         response.raise_for_status()  # Raise an error for bad status codes
         soup = BeautifulSoup(response.content, "html.parser")
 
@@ -88,6 +82,7 @@ def scrape_amazon_product_info(url):
         st.error(f"Error scraping Amazon product info: {e}")
         return None, None, None
 
+# Function to analyze reviews using the model
 def analyze_reviews(reviews):
     fake_count, genuine_count = 0, 0
     feature_sentiments = {}
